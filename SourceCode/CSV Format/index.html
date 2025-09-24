@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Data Manager</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --gray-color: #bdc3c7;
+            --border-radius: 6px;
+            --box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        h1 {
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            font-size: 1.8rem;
+        }
+        
+        .description {
+            color: #7f8c8d;
+            max-width: 800px;
+            margin: 0 auto;
+            font-size: 0.9rem;
+        }
+        
+        .app-section {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .section-title {
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-color);
+            color: var(--dark-color);
+            font-size: 1.3rem;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--gray-color);
+            border-radius: var(--border-radius);
+            padding: 30px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 12px;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            margin: 4px;
+            white-space: nowrap;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn:disabled {
+            background-color: var(--gray-color);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        
+        .filter-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .filter-control {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid var(--gray-color);
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+        }
+        
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+        
+        .stat-item {
+            background: var(--light-color);
+            padding: 4px 8px;
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid var(--gray-color);
+            border-radius: var(--border-radius);
+            position: relative;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-color);
+            position: relative;
+        }
+        
+        th {
+            background-color: var(--light-color);
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            user-select: none;
+            font-weight: 600;
+        }
+        
+        th:hover {
+            background-color: #d5dbdb;
+        }
+        
+        th.sort-asc::after {
+            content: " ↑";
+        }
+        
+        th.sort-desc::after {
+            content: " ↓";
+        }
+        
+        tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        tr.edited {
+            background-color: rgba(243, 156, 18, 0.1);
+        }
+        
+        td.edited {
+            background-color: rgba(243, 156, 18, 0.2);
+        }
+        
+        td input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+        
+        .edit-icon {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            opacity: 0;
+            transition: var(--transition);
+            cursor: pointer;
+            background: white;
+            padding: 2px;
+            border-radius: 3px;
+        }
+        
+        td:hover .edit-icon {
+            opacity: 1;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 12px;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        
+        .page-btn {
+            padding: 6px 10px;
+            background: var(--light-color);
+            border: 1px solid var(--gray-color);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+        
+        .page-btn:hover {
+            background: #d5dbdb;
+        }
+        
+        .page-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            color: white;
+            box-shadow: var(--box-shadow);
+            z-index: 1000;
+            opacity: 0;
+            transition: var(--transition);
+            max-width: 300px;
+            font-size: 0.9rem;
+        }
+        
+        .notification.show {
+            opacity: 1;
+        }
+        
+        .notification.success {
+            background-color: var(--success-color);
+        }
+        
+        .notification.error {
+            background-color: var(--danger-color);
+        }
+        
+        .mobile-controls {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .mobile-controls .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .mobile-filters {
+            display: none;
+            background: var(--light-color);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+        }
+        
+        .mobile-filters.active {
+            display: block;
+        }
+        
+        .mobile-toggle {
+            display: none;
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .app-section {
+                padding: 12px;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                font-size: 13px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .section-title {
+                font-size: 1.2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .desktop-controls {
+                display: none;
+            }
+            
+            .mobile-controls {
+                display: flex;
+            }
+            
+            .mobile-toggle {
+                display: flex;
+            }
+            
+            .filter-controls {
+                flex-direction: column;
+            }
+            
+            .stats {
+                justify-content: center;
+            }
+            
+            .table-container {
+                max-height: 400px;
+            }
+            
+            .edit-icon {
+                opacity: 1;
+                font-size: 0.8rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 5px;
+            }
+            
+            .app-section {
+                padding: 10px;
+            }
+            
+            .upload-area {
+                padding: 20px 10px;
+            }
+            
+            .btn {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+            
+            th, td {
+                padding: 6px 8px;
+                font-size: 0.85rem;
+            }
+            
+            .stat-item {
+                font-size: 0.8rem;
+            }
+            
+            .table-container {
+                max-height: 350px;
+            }
+        }
+        
+        /* Performance optimizations */
+        .virtual-scroll {
+            position: relative;
+            height: 400px;
+            overflow-y: auto;
+        }
+        
+        .virtual-scroll-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+        }
+        
+        .row {
+            position: absolute;
+            width: 100%;
+            display: table;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-book"></i> Book Data Manager</h1>
+            <p class="description">Upload, edit, filter, and download your book collection CSV files with ease. Supports large datasets with 10,000+ records.</p>
+        </header>
+        
+        <section class="app-section">
+            <h2 class="section-title">Upload CSV File</h2>
+            <div id="uploadArea" class="upload-area">
+                <p><i class="fas fa-cloud-upload-alt"></i> Drag & drop your CSV file here or click to browse</p>
+                <p><small>Expected format: Title, Author, Genre, PublishedYear, ISBN</small></p>
+                <input type="file" id="fileInput" accept=".csv" style="display: none;">
+            </div>
+            <div style="text-align: center;">
+                <button id="generateData" class="btn btn-warning"><i class="fas fa-database"></i> Generate Sample Data (10,000 records)</button>
+            </div>
+        </section>
+        
+        <section class="app-section" id="editorSection" style="display: none;">
+            <h2 class="section-title">Edit Book Data</h2>
+            
+            <div class="mobile-toggle">
+                <button id="toggleFilters" class="btn"><i class="fas fa-filter"></i> Toggle Filters</button>
+            </div>
+            
+            <div id="mobileFilters" class="mobile-filters">
+                <div class="filter-controls">
+                    <div class="filter-control">
+                        <input type="text" id="titleFilter" placeholder="Filter by title...">
+                    </div>
+                    <div class="filter-control">
+                        <input type="text" id="authorFilter" placeholder="Filter by author...">
+                    </div>
+                    <div class="filter-control">
+                        <select id="genreFilter">
+                            <option value="">All genres</option>
+                        </select>
+                    </div>
+                    <div class="filter-control">
+                        <input type="number" id="yearFilter" placeholder="Filter by year...">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <div class="filter-controls desktop-controls">
+                    <div class="filter-control">
+                        <input type="text" id="titleFilterDesktop" placeholder="Filter by title...">
+                    </div>
+                    <div class="filter-control">
+                        <input type="text" id="authorFilterDesktop" placeholder="Filter by author...">
+                    </div>
+                    <div class="filter-control">
+                        <select id="genreFilterDesktop">
+                            <option value="">All genres</option>
+                        </select>
+                    </div>
+                    <div class="filter-control">
+                        <input type="number" id="yearFilterDesktop" placeholder="Filter by year...">
+                    </div>
+                </div>
+                
+                <div class="desktop-controls">
+                    <button id="resetEdits" class="btn btn-warning"><i class="fas fa-undo"></i> Reset All Edits</button>
+                    <button id="downloadCsv" class="btn btn-success"><i class="fas fa-download"></i> Download CSV</button>
+                </div>
+                
+                <div class="mobile-controls">
+                    <button id="resetEditsMobile" class="btn btn-warning"><i class="fas fa-undo"></i> Reset Edits</button>
+                    <button id="downloadCsvMobile" class="btn btn-success"><i class="fas fa-download"></i> Download</button>
+                </div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-item"><i class="fas fa-list"></i> Total Records: <span id="totalRecords">0</span></div>
+                <div class="stat-item"><i class="fas fa-filter"></i> Filtered Records: <span id="filteredRecords">0</span></div>
+                <div class="stat-item"><i class="fas fa-edit"></i> Modified Records: <span id="modifiedRecords">0</span></div>
+                <div class="stat-item"><i class="fas fa-file"></i> Current Page: <span id="currentPage">1</span></div>
+                <div class="stat-item"><i class="fas fa-copy"></i> Total Pages: <span id="totalPages">1</span></div>
+            </div>
+            
+            <div class="table-container" id="tableContainer">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th data-sort="title">Title <i class="fas fa-sort"></i></th>
+                            <th data-sort="author">Author <i class="fas fa-sort"></i></th>
+                            <th data-sort="genre">Genre <i class="fas fa-sort"></i></th>
+                            <th data-sort="publishedYear">Published Year <i class="fas fa-sort"></i></th>
+                            <th data-sort="isbn">ISBN <i class="fas fa-sort"></i></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination" id="pagination">
+                <!-- Pagination buttons will be generated here -->
+            </div>
+        </section>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing data...</p>
+        </div>
+        
+        <div id="notification" class="notification"></div>
+    </div>
+
+    <script>
+        // Application state
+        const state = {
+            originalData: [],
+            currentData: [],
+            filteredData: [],
+            displayedData: [],
+            edits: new Map(), // Track edits: key is row index, value is object of edited fields
+            sortColumn: null,
+            sortDirection: 'asc',
+            currentPage: 1,
+            pageSize: 50,
+            filters: {
+                title: '',
+                author: '',
+                genre: '',
+                year: ''
+            },
+            // Performance optimization
+            renderBuffer: 5, // Number of extra rows to render above and below visible area
+            lastScrollTop: 0
+        };
+
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const generateDataBtn = document.getElementById('generateData');
+        const editorSection = document.getElementById('editorSection');
+        const tableBody = document.getElementById('tableBody');
+        const tableContainer = document.getElementById('tableContainer');
+        const titleFilter = document.getElementById('titleFilter');
+        const authorFilter = document.getElementById('authorFilter');
+        const genreFilter = document.getElementById('genreFilter');
+        const yearFilter = document.getElementById('yearFilter');
+        const titleFilterDesktop = document.getElementById('titleFilterDesktop');
+        const authorFilterDesktop = document.getElementById('authorFilterDesktop');
+        const genreFilterDesktop = document.getElementById('genreFilterDesktop');
+        const yearFilterDesktop = document.getElementById('yearFilterDesktop');
+        const resetEditsBtn = document.getElementById('resetEdits');
+        const downloadCsvBtn = document.getElementById('downloadCsv');
+        const resetEditsMobileBtn = document.getElementById('resetEditsMobile');
+        const downloadCsvMobileBtn = document.getElementById('downloadCsvMobile');
+        const toggleFiltersBtn = document.getElementById('toggleFilters');
+        const mobileFilters = document.getElementById('mobileFilters');
+        const totalRecordsSpan = document.getElementById('totalRecords');
+        const filteredRecordsSpan = document.getElementById('filteredRecords');
+        const modifiedRecordsSpan = document.getElementById('modifiedRecords');
+        const currentPageSpan = document.getElementById('currentPage');
+        const totalPagesSpan = document.getElementById('totalPages');
+        const paginationDiv = document.getElementById('pagination');
+        const loadingDiv = document.getElementById('loading');
+        const notificationDiv = document.getElementById('notification');
+
+        // Event listeners
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        generateDataBtn.addEventListener('click', generateSampleData);
+        
+        // Desktop filters
+        titleFilterDesktop.addEventListener('input', () => {
+            titleFilter.value = titleFilterDesktop.value;
+            applyFilter('title', titleFilterDesktop.value);
+        });
+        authorFilterDesktop.addEventListener('input', () => {
+            authorFilter.value = authorFilterDesktop.value;
+            applyFilter('author', authorFilterDesktop.value);
+        });
+        genreFilterDesktop.addEventListener('change', () => {
+            genreFilter.value = genreFilterDesktop.value;
+            applyFilter('genre', genreFilterDesktop.value);
+        });
+        yearFilterDesktop.addEventListener('input', () => {
+            yearFilter.value = yearFilterDesktop.value;
+            applyFilter('year', yearFilterDesktop.value);
+        });
+        
+        // Mobile filters
+        titleFilter.addEventListener('input', () => {
+            titleFilterDesktop.value = titleFilter.value;
+            applyFilter('title', titleFilter.value);
+        });
+        authorFilter.addEventListener('input', () => {
+            authorFilterDesktop.value = authorFilter.value;
+            applyFilter('author', authorFilter.value);
+        });
+        genreFilter.addEventListener('change', () => {
+            genreFilterDesktop.value = genreFilter.value;
+            applyFilter('genre', genreFilter.value);
+        });
+        yearFilter.addEventListener('input', () => {
+            yearFilterDesktop.value = yearFilter.value;
+            applyFilter('year', yearFilter.value);
+        });
+        
+        resetEditsBtn.addEventListener('click', resetAllEdits);
+        downloadCsvBtn.addEventListener('click', downloadCSV);
+        resetEditsMobileBtn.addEventListener('click', resetAllEdits);
+        downloadCsvMobileBtn.addEventListener('click', downloadCSV);
+        toggleFiltersBtn.addEventListener('click', () => {
+            mobileFilters.classList.toggle('active');
+        });
+        
+        // Scroll event for virtual rendering (for very large datasets)
+        tableContainer.addEventListener('scroll', handleTableScroll);
+
+        // Drag and drop handlers
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length) {
+                processFile(e.dataTransfer.files[0]);
+            }
+        }
+
+        // File selection handler
+        function handleFileSelect(e) {
+            if (e.target.files.length) {
+                processFile(e.target.files[0]);
+            }
+        }
+
+        // Process CSV file
+        function processFile(file) {
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                showNotification('Please select a CSV file', 'error');
+                return;
+            }
+
+            showLoading(true);
+            
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.errors.length) {
+                        showNotification('Error parsing CSV: ' + results.errors[0].message, 'error');
+                        showLoading(false);
+                        return;
+                    }
+                    
+                    // Validate required columns
+                    const requiredColumns = ['Title', 'Author', 'Genre', 'PublishedYear', 'ISBN'];
+                    const missingColumns = requiredColumns.filter(col => !results.meta.fields.includes(col));
+                    
+                    if (missingColumns.length) {
+                        showNotification('Missing required columns: ' + missingColumns.join(', '), 'error');
+                        showLoading(false);
+                        return;
+                    }
+                    
+                    initializeData(results.data);
+                    showLoading(false);
+                    showNotification('CSV file loaded successfully!', 'success');
+                },
+                error: function(error) {
+                    showNotification('Error reading file: ' + error.message, 'error');
+                    showLoading(false);
+                }
+            });
+        }
+
+        // Generate sample data
+        function generateSampleData() {
+            showLoading(true);
+            
+            // Simulate processing time for large dataset
+            setTimeout(() => {
+                const genres = [
+                    'Fiction', 'Non-Fiction', 'Science Fiction', 'Fantasy', 'Mystery', 
+                    'Thriller', 'Romance', 'Biography', 'History', 'Science', 
+                    'Self-Help', 'Business', 'Travel', 'Cooking', 'Art'
+                ];
+                
+                const firstNames = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 'William', 'Elizabeth'];
+                const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
+                
+                const sampleData = [];
+                
+                for (let i = 0; i < 10000; i++) {
+                    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+                    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+                    const title = `The ${['Mystery', 'Adventure', 'Journey', 'Secret', 'Legacy'][Math.floor(Math.random() * 5)]} of ${lastName}`;
+                    const author = `${firstName} ${lastName}`;
+                    const genre = genres[Math.floor(Math.random() * genres.length)];
+                    const publishedYear = Math.floor(Math.random() * 50) + 1970;
+                    const isbn = `978-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}-${Math.floor(Math.random() * 10)}`;
+                    
+                    sampleData.push({
+                        Title: title,
+                        Author: author,
+                        Genre: genre,
+                        PublishedYear: publishedYear,
+                        ISBN: isbn
+                    });
+                }
+                
+                initializeData(sampleData);
+                showLoading(false);
+                showNotification('Sample data generated successfully!', 'success');
+            }, 500);
+        }
+
+        // Initialize application with data
+        function initializeData(data) {
+            state.originalData = [...data];
+            state.currentData = [...data];
+            state.edits.clear();
+            state.currentPage = 1;
+            
+            // Populate genre filter
+            const uniqueGenres = [...new Set(data.map(item => item.Genre))].sort();
+            genreFilter.innerHTML = '<option value="">All genres</option>';
+            genreFilterDesktop.innerHTML = '<option value="">All genres</option>';
+            uniqueGenres.forEach(genre => {
+                const option = document.createElement('option');
+                option.value = genre;
+                option.textContent = genre;
+                genreFilter.appendChild(option);
+                
+                const optionDesktop = document.createElement('option');
+                optionDesktop.value = genre;
+                optionDesktop.textContent = genre;
+                genreFilterDesktop.appendChild(optionDesktop);
+            });
+            
+            // Reset filters
+            state.filters = { title: '', author: '', genre: '', year: '' };
+            titleFilter.value = '';
+            authorFilter.value = '';
+            genreFilter.value = '';
+            yearFilter.value = '';
+            titleFilterDesktop.value = '';
+            authorFilterDesktop.value = '';
+            genreFilterDesktop.value = '';
+            yearFilterDesktop.value = '';
+            
+            // Show editor section
+            editorSection.style.display = 'block';
+            
+            // Apply initial filters and render
+            applyAllFilters();
+            updateStats();
+        }
+
+        // Apply all filters
+        function applyAllFilters() {
+            // Use requestAnimationFrame for smoother UI updates
+            requestAnimationFrame(() => {
+                state.filteredData = state.currentData.filter(item => {
+                    return (
+                        item.Title.toLowerCase().includes(state.filters.title.toLowerCase()) &&
+                        item.Author.toLowerCase().includes(state.filters.author.toLowerCase()) &&
+                        (state.filters.genre === '' || item.Genre === state.filters.genre) &&
+                        (state.filters.year === '' || item.PublishedYear.toString().includes(state.filters.year))
+                    );
+                });
+                
+                // Apply sorting
+                if (state.sortColumn) {
+                    state.filteredData.sort((a, b) => {
+                        let aVal = a[state.sortColumn];
+                        let bVal = b[state.sortColumn];
+                        
+                        // Handle numeric sorting for years
+                        if (state.sortColumn === 'PublishedYear') {
+                            aVal = parseInt(aVal);
+                            bVal = parseInt(bVal);
+                        }
+                        
+                        if (aVal < bVal) return state.sortDirection === 'asc' ? -1 : 1;
+                        if (aVal > bVal) return state.sortDirection === 'asc' ? 1 : -1;
+                        return 0;
+                    });
+                }
+                
+                updatePagination();
+                renderTable();
+            });
+        }
+
+        // Apply individual filter
+        function applyFilter(type, value) {
+            state.filters[type] = value;
+            state.currentPage = 1;
+            applyAllFilters();
+            updateStats();
+        }
+
+        // Sort table by column
+        function sortTable(column) {
+            // Update sort state
+            if (state.sortColumn === column) {
+                state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.sortColumn = column;
+                state.sortDirection = 'asc';
+            }
+            
+            // Update table headers
+            document.querySelectorAll('th').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+            });
+            
+            const currentTh = document.querySelector(`th[data-sort="${column}"]`);
+            currentTh.classList.add(state.sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+            
+            applyAllFilters();
+        }
+
+        // Update pagination
+        function updatePagination() {
+            const totalPages = Math.ceil(state.filteredData.length / state.pageSize);
+            state.totalPages = totalPages;
+            
+            // Ensure current page is valid
+            if (state.currentPage > totalPages) {
+                state.currentPage = totalPages > 0 ? totalPages : 1;
+            }
+            
+            // Update displayed data
+            const startIndex = (state.currentPage - 1) * state.pageSize;
+            const endIndex = Math.min(startIndex + state.pageSize, state.filteredData.length);
+            state.displayedData = state.filteredData.slice(startIndex, endIndex);
+            
+            // Update pagination UI
+            paginationDiv.innerHTML = '';
+            
+            if (totalPages <= 1) return;
+            
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevBtn.disabled = state.currentPage === 1;
+            prevBtn.addEventListener('click', () => {
+                if (state.currentPage > 1) {
+                    state.currentPage--;
+                    updatePagination();
+                    renderTable();
+                    updateStats();
+                }
+            });
+            paginationDiv.appendChild(prevBtn);
+            
+            // Page buttons
+            const startPage = Math.max(1, state.currentPage - 2);
+            const endPage = Math.min(totalPages, state.currentPage + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = 'page-btn' + (i === state.currentPage ? ' active' : '');
+                pageBtn.textContent = i;
+                pageBtn.addEventListener('click', () => {
+                    state.currentPage = i;
+                    updatePagination();
+                    renderTable();
+                    updateStats();
+                });
+                paginationDiv.appendChild(pageBtn);
+            }
+            
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextBtn.disabled = state.currentPage === totalPages;
+            nextBtn.addEventListener('click', () => {
+                if (state.currentPage < totalPages) {
+                    state.currentPage++;
+                    updatePagination();
+                    renderTable();
+                    updateStats();
+                }
+            });
+            paginationDiv.appendChild(nextBtn);
+        }
+
+        // Render table with current data
+        function renderTable() {
+            // Use requestAnimationFrame for smoother rendering
+            requestAnimationFrame(() => {
+                tableBody.innerHTML = '';
+                
+                if (state.displayedData.length === 0) {
+                    const emptyRow = document.createElement('tr');
+                    const emptyCell = document.createElement('td');
+                    emptyCell.colSpan = 5;
+                    emptyCell.textContent = 'No data to display';
+                    emptyCell.style.textAlign = 'center';
+                    emptyCell.style.padding = '20px';
+                    emptyRow.appendChild(emptyCell);
+                    tableBody.appendChild(emptyRow);
+                    return;
+                }
+                
+                state.displayedData.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    const globalIndex = (state.currentPage - 1) * state.pageSize + index;
+                    
+                    // Check if this row has edits
+                    const hasEdits = state.edits.has(globalIndex);
+                    if (hasEdits) {
+                        row.classList.add('edited');
+                    }
+                    
+                    // Title cell
+                    const titleCell = document.createElement('td');
+                    const titleInput = document.createElement('input');
+                    titleInput.type = 'text';
+                    titleInput.value = item.Title;
+                    titleInput.addEventListener('change', (e) => updateCell(globalIndex, 'Title', e.target.value));
+                    titleCell.appendChild(titleInput);
+                    
+                    // Add edit icon
+                    const titleEditIcon = document.createElement('span');
+                    titleEditIcon.className = 'edit-icon';
+                    titleEditIcon.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+                    titleEditIcon.addEventListener('click', () => {
+                        titleInput.focus();
+                        titleInput.select();
+                    });
+                    titleCell.appendChild(titleEditIcon);
+                    
+                    if (hasEdits && state.edits.get(globalIndex).Title !== undefined) {
+                        titleCell.classList.add('edited');
+                    }
+                    row.appendChild(titleCell);
+                    
+                    // Author cell
+                    const authorCell = document.createElement('td');
+                    const authorInput = document.createElement('input');
+                    authorInput.type = 'text';
+                    authorInput.value = item.Author;
+                    authorInput.addEventListener('change', (e) => updateCell(globalIndex, 'Author', e.target.value));
+                    authorCell.appendChild(authorInput);
+                    
+                    const authorEditIcon = document.createElement('span');
+                    authorEditIcon.className = 'edit-icon';
+                    authorEditIcon.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+                    authorEditIcon.addEventListener('click', () => {
+                        authorInput.focus();
+                        authorInput.select();
+                    });
+                    authorCell.appendChild(authorEditIcon);
+                    
+                    if (hasEdits && state.edits.get(globalIndex).Author !== undefined) {
+                        authorCell.classList.add('edited');
+                    }
+                    row.appendChild(authorCell);
+                    
+                    // Genre cell
+                    const genreCell = document.createElement('td');
+                    const genreInput = document.createElement('input');
+                    genreInput.type = 'text';
+                    genreInput.value = item.Genre;
+                    genreInput.addEventListener('change', (e) => updateCell(globalIndex, 'Genre', e.target.value));
+                    genreCell.appendChild(genreInput);
+                    
+                    const genreEditIcon = document.createElement('span');
+                    genreEditIcon.className = 'edit-icon';
+                    genreEditIcon.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+                    genreEditIcon.addEventListener('click', () => {
+                        genreInput.focus();
+                        genreInput.select();
+                    });
+                    genreCell.appendChild(genreEditIcon);
+                    
+                    if (hasEdits && state.edits.get(globalIndex).Genre !== undefined) {
+                        genreCell.classList.add('edited');
+                    }
+                    row.appendChild(genreCell);
+                    
+                    // PublishedYear cell
+                    const yearCell = document.createElement('td');
+                    const yearInput = document.createElement('input');
+                    yearInput.type = 'number';
+                    yearInput.value = item.PublishedYear;
+                    yearInput.addEventListener('change', (e) => updateCell(globalIndex, 'PublishedYear', parseInt(e.target.value) || 0));
+                    yearCell.appendChild(yearInput);
+                    
+                    const yearEditIcon = document.createElement('span');
+                    yearEditIcon.className = 'edit-icon';
+                    yearEditIcon.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+                    yearEditIcon.addEventListener('click', () => {
+                        yearInput.focus();
+                        yearInput.select();
+                    });
+                    yearCell.appendChild(yearEditIcon);
+                    
+                    if (hasEdits && state.edits.get(globalIndex).PublishedYear !== undefined) {
+                        yearCell.classList.add('edited');
+                    }
+                    row.appendChild(yearCell);
+                    
+                    // ISBN cell
+                                       // ISBN cell
+                    const isbnCell = document.createElement('td');
+                    const isbnInput = document.createElement('input');
+                    isbnInput.type = 'text';
+                    isbnInput.value = item.ISBN;
+                    isbnInput.addEventListener('change', (e) => updateCell(globalIndex, 'ISBN', e.target.value));
+                    isbnCell.appendChild(isbnInput);
+                    
+                    const isbnEditIcon = document.createElement('span');
+                    isbnEditIcon.className = 'edit-icon';
+                    isbnEditIcon.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+                    isbnEditIcon.addEventListener('click', () => {
+                        isbnInput.focus();
+                        isbnInput.select();
+                    });
+                    isbnCell.appendChild(isbnEditIcon);
+                    
+                    if (hasEdits && state.edits.get(globalIndex).ISBN !== undefined) {
+                        isbnCell.classList.add('edited');
+                    }
+                    row.appendChild(isbnCell);
+                    
+                    tableBody.appendChild(row);
+                });
+                
+                // Add sort event listeners to table headers
+                document.querySelectorAll('th[data-sort]').forEach(th => {
+                    th.addEventListener('click', () => {
+                        sortTable(th.getAttribute('data-sort'));
+                    });
+                });
+            });
+        }
+
+        // Update cell value
+        function updateCell(index, field, value) {
+            // Get the original data index from filtered data
+            const originalIndex = state.currentData.findIndex(item => 
+                item === state.filteredData[index]
+            );
+            
+            if (originalIndex === -1) return;
+            
+            // Update the edit record
+            if (!state.edits.has(originalIndex)) {
+                state.edits.set(originalIndex, {});
+            }
+            
+            const edits = state.edits.get(originalIndex);
+            const originalValue = state.originalData[originalIndex][field];
+            
+            // If value matches original, remove the edit
+            if (value === originalValue) {
+                delete edits[field];
+                if (Object.keys(edits).length === 0) {
+                    state.edits.delete(originalIndex);
+                }
+            } else {
+                edits[field] = value;
+            }
+            
+            // Update current data
+            state.currentData[originalIndex][field] = value;
+            
+            // Reapply filters and update display
+            applyAllFilters();
+            updateStats();
+            
+            showNotification('Cell updated successfully!', 'success');
+        }
+
+        // Reset all edits
+        function resetAllEdits() {
+            if (state.edits.size === 0) {
+                showNotification('No edits to reset.', 'error');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to reset all edits? This action cannot be undone.')) {
+                return;
+            }
+            
+            // Restore original data
+            state.edits.forEach((edits, index) => {
+                Object.keys(edits).forEach(field => {
+                    state.currentData[index][field] = state.originalData[index][field];
+                });
+            });
+            
+            state.edits.clear();
+            applyAllFilters();
+            updateStats();
+            
+            showNotification('All edits have been reset.', 'success');
+        }
+
+        // Download CSV
+        function downloadCSV() {
+            if (state.currentData.length === 0) {
+                showNotification('No data to download.', 'error');
+                return;
+            }
+            
+            const csv = Papa.unparse(state.currentData, {
+                header: true
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'edited_books.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('CSV file downloaded successfully!', 'success');
+        }
+
+        // Update statistics
+        function updateStats() {
+            totalRecordsSpan.textContent = state.originalData.length.toLocaleString();
+            filteredRecordsSpan.textContent = state.filteredData.length.toLocaleString();
+            modifiedRecordsSpan.textContent = state.edits.size.toLocaleString();
+            currentPageSpan.textContent = state.currentPage;
+            totalPagesSpan.textContent = Math.ceil(state.filteredData.length / state.pageSize) || 1;
+        }
+
+        // Show/hide loading indicator
+        function showLoading(show) {
+            loadingDiv.style.display = show ? 'block' : 'none';
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            notificationDiv.textContent = message;
+            notificationDiv.className = `notification ${type}`;
+            notificationDiv.classList.add('show');
+            
+            setTimeout(() => {
+                notificationDiv.classList.remove('show');
+            }, 3000);
+        }
+
+        // Handle table scroll for virtual rendering optimization
+        function handleTableScroll() {
+            // Simple throttling for scroll events
+            const scrollTop = tableContainer.scrollTop;
+            if (Math.abs(scrollTop - state.lastScrollTop) < 50) return;
+            
+            state.lastScrollTop = scrollTop;
+            
+            // For very large datasets, we could implement virtual scrolling here
+            // This is a placeholder for future optimization
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add any initialization code here if needed
+            console.log('Book Data Manager initialized');
+        });
+    </script>
+</body>
+</html>
